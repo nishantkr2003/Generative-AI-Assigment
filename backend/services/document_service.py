@@ -1,5 +1,4 @@
 import os
-
 from services.pdf_service import extract_pdf_text
 from services.docx_service import extract_docx_text
 from services.text_service import extract_text_file
