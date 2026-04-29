@@ -5,7 +5,9 @@ load_dotenv()
 
 class Config:
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+    # MongoDB
     MONGO_URI = os.getenv("MONGO_URI")
+    MONGO_DB_NAME = os.getenv("MONGO_DB_NAME")
     
     # Detect Render environment
     #BASE_STORAGE = "/var/data" if os.getenv("RENDER") else "."

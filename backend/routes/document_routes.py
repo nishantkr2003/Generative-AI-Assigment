@@ -1,18 +1,15 @@
 import os
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
-
+from services.memory_service import save_chat_message
 from config import Config
 from services.document_service import extract_text_from_document
 from services.process_service import process_document
 from services.rag_pipeline_service import prepare_document_for_rag
 from services.store_pipeline_service import store_document_for_rag
 from services.rag_answer_service import answer_document_query
-from services.memory_service import (
-    create_or_get_session,
-    save_message,
-    get_chat_history
-)
+from services.memory_service import get_user_chat_history
+from services.memory_service import clear_user_chat_history
 
 document_bp = Blueprint("document_bp", __name__)
 
@@ -218,6 +215,8 @@ def ask_document():
             }), 400
 
         question = data["question"].strip()
+        user_id = data.get("user_id")
+        
 
         if not question:
             return jsonify({
@@ -255,6 +254,14 @@ def ask_document():
             active_document=active_document
             
         )
+        # Save to MongoDB if authenticated user
+        if user_id:
+            save_chat_message(
+                user_id=user_id,
+                question=result["question"],
+                answer=result["answer"],
+                sources=result["sources"]
+            )
 
         # Safe save block
         if user_id and session_id:
@@ -285,22 +292,54 @@ def ask_document():
             "message": str(e)
         }), 500
 
-# @document_bp.route("/history/<user_id>/<session_id>", methods=["GET"])
-# def get_session_history(user_id, session_id):
+@document_bp.route("/history", methods=["POST"])
+def get_chat_history():
     try:
-        history = get_chat_history(user_id, session_id) or []
+        data = request.get_json()
+
+        user_id = data.get("user_id")
+
+        if not user_id:
+            return jsonify({
+                "status": "error",
+                "message": "User ID is required"
+            }), 400
+
+        history = get_user_chat_history(user_id)
 
         return jsonify({
             "status": "success",
-            "session_id": session_id,
             "history": history
         }), 200
 
     except Exception as e:
-        print("History Route Error:", str(e))
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    
+@document_bp.route("/clear-history", methods=["POST"])
+def clear_chat_history():
+    try:
+        data = request.get_json()
+
+        user_id = data.get("user_id")
+
+        if not user_id:
+            return jsonify({
+                "status": "error",
+                "message": "User ID is required"
+            }), 400
+
+        deleted_count = clear_user_chat_history(user_id)
 
         return jsonify({
             "status": "success",
-            "session_id": session_id,
-            "history": []
+            "message": f"Deleted {deleted_count} chat records"
         }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
