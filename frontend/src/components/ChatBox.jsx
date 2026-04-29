@@ -1,5 +1,5 @@
 
-import { askDocument } from "../services/api";
+import { askDocument, getChatHistory, clearChatHistory } from "../services/api";
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 export default function ChatBox() {
@@ -12,14 +12,51 @@ export default function ChatBox() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const savedChats = localStorage.getItem(storageKey);
+    const loadHistory = async () => {
+      try {
+        // Logged-in user → MongoDB
+        if (user?.id) {
+          const response = await getChatHistory(user.id);
 
-    if (savedChats) {
-      setChatHistory(JSON.parse(savedChats));
-    } else {
-      setChatHistory([]);
-    }
-  }, [storageKey]);
+          if (response.history) {
+            const formattedHistory = response.history
+              .slice()
+              .reverse()
+              .map((chat) => ({
+                question: chat.question,
+                answer: chat.answer,
+                sources: chat.sources || [],
+              }));
+
+            setChatHistory(formattedHistory);
+            return;
+          }
+        }
+
+        // Fallback → localStorage
+        const savedChats = localStorage.getItem(storageKey);
+
+        if (savedChats) {
+          setChatHistory(JSON.parse(savedChats));
+        } else {
+          setChatHistory([]);
+        }
+      } catch (error) {
+        console.error("History load failed:", error);
+
+        // Safe fallback
+        const savedChats = localStorage.getItem(storageKey);
+
+        if (savedChats) {
+          setChatHistory(JSON.parse(savedChats));
+        } else {
+          setChatHistory([]);
+        }
+      }
+    };
+
+    loadHistory();
+  }, [storageKey, user]);
 
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(chatHistory));
@@ -35,7 +72,7 @@ export default function ChatBox() {
 
       setQuestion("");
 
-      const response = await askDocument(currentQuestion);
+      const response = await askDocument(currentQuestion, user?.id || null);
 
       const newChat = {
         question: currentQuestion,
@@ -84,9 +121,17 @@ export default function ChatBox() {
         </button>
 
         <button
-          onClick={() => {
-            setChatHistory([]);
-            localStorage.removeItem(storageKey);
+          onClick={async () => {
+            try {
+              setChatHistory([]);
+              localStorage.removeItem(storageKey);
+
+              if (user?.id) {
+                await clearChatHistory(user.id);
+              }
+            } catch (error) {
+              console.error("Clear history failed:", error);
+            }
           }}
           className="ml-4 px-6 py-3 border border-gray-600 rounded-lg font-semibold"
         >

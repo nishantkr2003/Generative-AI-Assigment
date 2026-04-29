@@ -1,70 +1,56 @@
 from datetime import datetime
+
 from services.mongo_service import chat_sessions_collection
 
 
-def create_or_get_session(user_id, session_id):
+def save_chat_message(user_id, question, answer, sources):
     """
-    Safe Mongo session creation
+    Save a single Q&A interaction for a user
     """
-    if chat_sessions_collection is None:
-        return session_id
+    if not user_id:
+        raise Exception("User ID is required")
 
-    session = chat_sessions_collection.find_one({
+    chat_sessions_collection.insert_one({
         "user_id": user_id,
-        "session_id": session_id
+        "question": question,
+        "answer": answer,
+        "sources": sources,
+        "timestamp": datetime.utcnow()
     })
 
-    if not session:
-        new_session = {
-            "user_id": user_id,
-            "session_id": session_id,
-            "messages": [],
-            "created_at": datetime.utcnow()
-        }
-
-        chat_sessions_collection.insert_one(new_session)
-
-    return session_id
+    return True
 
 
-def save_message(user_id, session_id, role, content):
+def get_user_chat_history(user_id, limit=20):
     """
-    Safe save
+    Retrieve previous chat history for a user
     """
-    if chat_sessions_collection is None:
-        return
+    if not user_id:
+        raise Exception("User ID is required")
 
-    chat_sessions_collection.update_one(
-        {
-            "user_id": user_id,
-            "session_id": session_id
-        },
-        {
-            "$push": {
-                "messages": {
-                    "role": role,
-                    "content": content,
-                    "timestamp": datetime.utcnow()
-                }
-            }
-        },
-        upsert=True
+    chats = list(
+        chat_sessions_collection
+        .find({"user_id": user_id})
+        .sort("timestamp", -1)
+        .limit(limit)
     )
 
+    # Convert ObjectId for JSON
+    for chat in chats:
+        chat["_id"] = str(chat["_id"])
 
-def get_chat_history(user_id, session_id, limit=10):
-    """
-    Safe retrieval
-    """
-    if chat_sessions_collection is None:
-        return []
+    return chats
 
-    session = chat_sessions_collection.find_one({
-        "user_id": user_id,
-        "session_id": session_id
+
+def clear_user_chat_history(user_id):
+    """
+    Delete all chat history for a user
+    """
+    if not user_id:
+        raise Exception("User ID is required")
+
+    result = chat_sessions_collection.delete_many({
+        "user_id": user_id
     })
 
-    if not session:
-        return []
-
-    return session.get("messages", [])[-limit:]
+    return result.deleted_count

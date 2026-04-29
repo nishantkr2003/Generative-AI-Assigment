@@ -37,9 +37,27 @@ export const storeDocument = async (filename) => {
 };
 
 // Ask Question
-export const askDocument = async (question) => {
+
+export const askDocument = async (question, userId) => {
   const response = await API.post("/ask", {
     question,
+    user_id: userId,
+  });
+
+  return response.data;
+};
+
+export const getChatHistory = async (userId) => {
+  const response = await API.post("/history", {
+    user_id: userId,
+  });
+
+  return response.data;
+};
+
+export const clearChatHistory = async (userId) => {
+  const response = await API.post("/clear-history", {
+    user_id: userId,
   });
 
   return response.data;
