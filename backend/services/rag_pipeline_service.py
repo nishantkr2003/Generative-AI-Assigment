@@ -1,5 +1,4 @@
 import os
-
 from services.document_service import extract_text_from_document
 from utils.text_chunker import chunk_text
 from services.embedding_service import generate_embeddings

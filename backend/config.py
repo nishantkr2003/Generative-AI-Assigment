@@ -19,7 +19,7 @@ class Config:
 
     # Models
     EMBEDDING_MODEL = "all-MiniLM-L6-v2"
-    GROQ_MODEL = "llama3-8b-8192"
+    GROQ_MODEL = "llama-3.3-70b-versatile"
 
     # App Config
     DEBUG = True
