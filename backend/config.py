@@ -5,7 +5,8 @@ load_dotenv()
 
 class Config:
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
+    MONGO_URI = os.getenv("MONGO_URI")
+    
     # Detect Render environment
     #BASE_STORAGE = "/var/data" if os.getenv("RENDER") else "."
 
@@ -20,6 +21,11 @@ class Config:
     # Models
     EMBEDDING_MODEL = "all-MiniLM-L6-v2"
     GROQ_MODEL = "llama-3.3-70b-versatile"
+
+    CHUNK_SIZE = 500
+    CHUNK_OVERLAP = 50
+    TOP_K_RESULTS = 3
+
 
     # App Config
     DEBUG = True
