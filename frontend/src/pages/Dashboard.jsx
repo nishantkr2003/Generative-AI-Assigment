@@ -1,18 +1,28 @@
 import { UserButton, useUser } from "@clerk/clerk-react";
+import { useNavigate } from "react-router-dom";
+
 import FileUploader from "../components/FileUploader";
 import ChatBox from "../components/ChatBox";
+
 export default function Dashboard() {
   const { user } = useUser();
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <header className="flex justify-between items-center p-4 border-b border-gray-800">
-        <h1 className="text-2xl font-bold">GenAI Doc Assistant</h1>
+        <h1
+          className="text-2xl font-bold cursor-pointer hover:text-blue-400 transition-colors"
+          onClick={() => navigate("/")}
+        >
+          GenAI Doc Assistant
+        </h1>
 
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-300">
             Welcome, {user?.firstName || "User"}
           </span>
+
           <UserButton afterSignOutUrl="/" />
         </div>
       </header>
