@@ -7,6 +7,7 @@ from services.document_service import extract_text_from_document
 from services.process_service import process_document
 from services.rag_pipeline_service import prepare_document_for_rag
 from services.store_pipeline_service import store_document_for_rag
+from services.rag_answer_service import answer_document_query
 
 document_bp = Blueprint("document_bp", __name__)
 
@@ -192,6 +193,43 @@ def store_document():
             "total_chunks": stored_data["total_chunks"],
             "embedding_dimension": stored_data["embedding_dimension"],
             "stored_chunks": stored_data["stored_chunks"]
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    
+
+
+@document_bp.route("/ask", methods=["POST"])
+def ask_document():
+    try:
+        data = request.get_json()
+
+        if not data or "question" not in data:
+            return jsonify({
+                "status": "error",
+                "message": "Question is required"
+            }), 400
+
+        question = data["question"].strip()
+
+        if not question:
+            return jsonify({
+                "status": "error",
+                "message": "Question cannot be empty"
+            }), 400
+
+        # Generate answer
+        result = answer_document_query(question)
+
+        return jsonify({
+            "status": "success",
+            "question": result["question"],
+            "answer": result["answer"],
+            "sources": result["sources"]
         }), 200
 
     except Exception as e:
