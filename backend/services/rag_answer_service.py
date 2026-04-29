@@ -12,7 +12,7 @@ llm = ChatGroq(
 )
 
 
-def answer_document_query(query):
+def answer_document_query(query, active_document=None):
     """
     Full RAG QA:
     Query -> Retrieve -> Answer
@@ -21,10 +21,17 @@ def answer_document_query(query):
         raise Exception("Query is required")
 
     # Step 1: Retrieve relevant chunks
-    retrieved_chunks = retrieve_relevant_chunks(query)
+    retrieved_chunks = retrieve_relevant_chunks(
+        query=query,
+        active_document=active_document
+    )
 
     if not retrieved_chunks:
-        raise Exception("No relevant document context found")
+        return {
+            "question": query,
+            "answer": "The document does not contain that information.",
+            "sources": []
+        }
 
     # Step 2: Build context
     context = "\n\n".join(
@@ -34,15 +41,19 @@ def answer_document_query(query):
     # Step 3: Prompt Template
     prompt = ChatPromptTemplate.from_template(
         """
-        You are a document assistant.
-        Answer ONLY from the provided document context.
-        If answer is not available, say:
-        "The document does not contain that information."
+        You are a highly accurate document assistant.
 
-        Context:
+        STRICT RULES:
+        1. Answer ONLY using the provided document context.
+        2. Do NOT use outside knowledge.
+        3. If answer is missing, reply exactly:
+           "The document does not contain that information."
+        4. Be concise and factual.
+
+        Document Context:
         {context}
 
-        Question:
+        User Question:
         {question}
         """
     )
@@ -57,6 +68,6 @@ def answer_document_query(query):
 
     return {
         "question": query,
-        "answer": response.content,
+        "answer": response.content.strip(),
         "sources": retrieved_chunks
     }

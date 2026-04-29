@@ -1,10 +1,13 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
-
+from services.mongo_service import test_mongo_connection
 from routes.document_routes import document_bp
 
 app = Flask(__name__)
 CORS(app)
+
+# Test DB after app setup
+test_mongo_connection()
 
 # Register Universal Document Blueprint
 app.register_blueprint(document_bp, url_prefix="/api/document")

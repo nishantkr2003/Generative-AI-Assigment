@@ -1,9 +1,11 @@
 from sentence_transformers import SentenceTransformer
-
 from config import Config
 
 # Load model once for performance
-embedding_model = SentenceTransformer(Config.EMBEDDING_MODEL)
+embedding_model = SentenceTransformer(
+    Config.EMBEDDING_MODEL,
+    device="cpu"
+)
 
 
 def generate_embeddings(chunks):
@@ -14,7 +16,13 @@ def generate_embeddings(chunks):
         raise Exception("No chunks provided for embedding")
 
     try:
-        embeddings = embedding_model.encode(chunks).tolist()
+        embeddings = embedding_model.encode(
+            chunks,
+            batch_size=32,
+            show_progress_bar=False,
+            convert_to_numpy=True,
+            normalize_embeddings=True
+        ).tolist()
 
         return {
             "total_chunks": len(chunks),

@@ -8,6 +8,11 @@ from services.process_service import process_document
 from services.rag_pipeline_service import prepare_document_for_rag
 from services.store_pipeline_service import store_document_for_rag
 from services.rag_answer_service import answer_document_query
+from services.memory_service import (
+    create_or_get_session,
+    save_message,
+    get_chat_history
+)
 
 document_bp = Blueprint("document_bp", __name__)
 
@@ -201,8 +206,6 @@ def store_document():
             "message": str(e)
         }), 500
     
-
-
 @document_bp.route("/ask", methods=["POST"])
 def ask_document():
     try:
@@ -222,18 +225,82 @@ def ask_document():
                 "message": "Question cannot be empty"
             }), 400
 
-        # Generate answer
-        result = answer_document_query(question)
+        user_id = data.get("user_id")
+        session_id = data.get("session_id")
+        active_document = data.get("active_document")
+
+        memory_context = ""
+
+        # Safe Mongo memory block
+        if user_id and session_id:
+            try:
+                create_or_get_session(user_id, session_id)
+
+                chat_history = get_chat_history(user_id, session_id)
+
+                memory_context = "\n".join([
+                    f"{msg['role']}: {msg['content']}"
+                    for msg in chat_history
+                ])
+
+            except Exception as memory_error:
+                print("Mongo Memory Error:", str(memory_error))
+
+        # Enhanced prompt
+        enhanced_question = question
+
+        # Main RAG Answer
+        result = answer_document_query(
+            query=enhanced_question,
+            active_document=active_document
+            
+        )
+
+        # Safe save block
+        if user_id and session_id:
+            try:
+                save_message(user_id, session_id, "user", question)
+                save_message(
+                    user_id,
+                    session_id,
+                    "assistant",
+                    result["answer"]
+                )
+            except Exception as save_error:
+                print("Mongo Save Error:", str(save_error))
 
         return jsonify({
             "status": "success",
-            "question": result["question"],
+            "question": question,
             "answer": result["answer"],
-            "sources": result["sources"]
+            "sources": result["sources"],
+            "session_id": session_id
         }), 200
 
     except Exception as e:
+        print("Ask Route Error:", str(e))
+
         return jsonify({
             "status": "error",
             "message": str(e)
         }), 500
+
+# @document_bp.route("/history/<user_id>/<session_id>", methods=["GET"])
+# def get_session_history(user_id, session_id):
+    try:
+        history = get_chat_history(user_id, session_id) or []
+
+        return jsonify({
+            "status": "success",
+            "session_id": session_id,
+            "history": history
+        }), 200
+
+    except Exception as e:
+        print("History Route Error:", str(e))
+
+        return jsonify({
+            "status": "success",
+            "session_id": session_id,
+            "history": []
+        }), 200
