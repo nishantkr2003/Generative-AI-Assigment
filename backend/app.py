@@ -20,7 +20,7 @@ CORS(app)
 
 # Ensure storage folders exist
 os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(Config.CHROMA_DIR, exist_ok=True)
+
 
 
 # Test MongoDB
@@ -42,4 +42,8 @@ def home():
 
 # Local Development
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=Config.DEBUG
+    )

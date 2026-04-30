@@ -1,14 +1,13 @@
 from sentence_transformers import SentenceTransformer
 from config import Config
 
-
 # Lazy-loaded model
 _model = None
 
 
 def get_embedding_model():
     """
-    Load embedding model only when needed
+    Load embedding model only once
     """
     global _model
 
@@ -21,6 +20,10 @@ def get_embedding_model():
     return _model
 
 
+# Global reusable model
+embedding_model = get_embedding_model()
+
+
 def generate_embeddings(chunks):
     """
     Convert text chunks into embeddings
@@ -29,8 +32,6 @@ def generate_embeddings(chunks):
         raise Exception("No chunks provided for embedding")
 
     try:
-        embedding_model = get_embedding_model()
-
         embeddings = embedding_model.encode(
             chunks,
             batch_size=8,

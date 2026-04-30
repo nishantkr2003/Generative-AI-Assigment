@@ -10,6 +10,11 @@ from services.store_pipeline_service import store_document_for_rag
 from services.rag_answer_service import answer_document_query
 from services.memory_service import get_user_chat_history
 from services.memory_service import clear_user_chat_history
+# from services.session_service import (
+#     create_or_get_session,
+#     get_chat_history,
+#     save_message
+# )
 
 document_bp = Blueprint("document_bp", __name__)
 
@@ -23,7 +28,9 @@ def allowed_file(filename):
 @document_bp.route("/upload", methods=["POST"])
 def upload_document():
     try:
-        # Validate file exists
+        # =========================
+        # STEP 1: Validate file exists
+        # =========================
         if "file" not in request.files:
             return jsonify({
                 "status": "error",
@@ -32,31 +39,47 @@ def upload_document():
 
         file = request.files["file"]
 
-        # Validate selected file
+        # =========================
+        # STEP 2: Validate filename
+        # =========================
         if file.filename == "":
             return jsonify({
                 "status": "error",
                 "message": "No file selected"
             }), 400
 
-        # Validate extension
+        # =========================
+        # STEP 3: Validate extension
+        # =========================
         if not allowed_file(file.filename):
             return jsonify({
                 "status": "error",
                 "message": "Unsupported file type. Allowed: pdf, docx, txt, md"
             }), 400
 
-        # Ensure upload folder exists
+        # =========================
+        # STEP 4: Ensure upload folder
+        # =========================
         os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
 
-        # Secure filename
+        # =========================
+        # STEP 5: Secure filename
+        # =========================
         filename = secure_filename(file.filename)
 
-        # Save file
-        file_path = os.path.join(Config.UPLOAD_FOLDER, filename)
+        # =========================
+        # STEP 6: Save file
+        # =========================
+        file_path = os.path.join(
+            Config.UPLOAD_FOLDER,
+            filename
+        )
+
         file.save(file_path)
 
-        # Extract text
+        # =========================
+        # STEP 7: Extract text preview
+        # =========================
         extracted_text = extract_text_from_document(file_path)
 
         if not extracted_text:
@@ -65,12 +88,26 @@ def upload_document():
                 "message": "No readable text found in document"
             }), 400
 
+        # =========================
+        # STEP 8: Full Pinecone RAG pipeline
+        # =========================
+        stored_data = store_document_for_rag(
+            file_path=file_path,
+            filename=filename
+        )
+
+        # =========================
+        # STEP 9: Final response
+        # =========================
         return jsonify({
             "status": "success",
-            "message": "Document uploaded and processed successfully",
+            "message": "Document uploaded, processed, and stored successfully in Pinecone",
             "filename": filename,
             "file_type": filename.rsplit(".", 1)[1].lower(),
-            "text_length": len(extracted_text),
+            "raw_text_length": stored_data["raw_text_length"],
+            "total_chunks": stored_data["total_chunks"],
+            "embedding_dimension": stored_data["embedding_dimension"],
+            "stored_chunks": stored_data["stored_chunks"],
             "preview": extracted_text[:1500]
         }), 200
 
@@ -188,14 +225,14 @@ def store_document():
         stored_data = store_document_for_rag(file_path, filename)
 
         return jsonify({
-            "status": "success",
-            "message": "Document stored successfully in ChromaDB",
-            "filename": stored_data["filename"],
-            "raw_text_length": stored_data["raw_text_length"],
-            "total_chunks": stored_data["total_chunks"],
-            "embedding_dimension": stored_data["embedding_dimension"],
-            "stored_chunks": stored_data["stored_chunks"]
-        }), 200
+    "status": "success",
+    "message": "Document stored successfully in Pinecone",
+    "filename": stored_data["filename"],
+    "raw_text_length": stored_data["raw_text_length"],
+    "total_chunks": stored_data["total_chunks"],
+    "embedding_dimension": stored_data["embedding_dimension"],
+    "stored_chunks": stored_data["stored_chunks"]
+}), 200
 
     except Exception as e:
         return jsonify({
@@ -206,6 +243,9 @@ def store_document():
 @document_bp.route("/ask", methods=["POST"])
 def ask_document():
     try:
+        # =========================
+        # STEP 1: Get request data
+        # =========================
         data = request.get_json()
 
         if not data or "question" not in data:
@@ -215,8 +255,6 @@ def ask_document():
             }), 400
 
         question = data["question"].strip()
-        user_id = data.get("user_id")
-        
 
         if not question:
             return jsonify({
@@ -224,18 +262,29 @@ def ask_document():
                 "message": "Question cannot be empty"
             }), 400
 
+        # =========================
+        # STEP 2: Optional metadata
+        # =========================
         user_id = data.get("user_id")
         session_id = data.get("session_id")
         active_document = data.get("active_document")
 
+        # =========================
+        # STEP 3: Build memory context
+        # =========================
         memory_context = ""
 
-        # Safe Mongo memory block
         if user_id and session_id:
             try:
-                create_or_get_session(user_id, session_id)
+                create_or_get_session(
+                    user_id,
+                    session_id
+                )
 
-                chat_history = get_chat_history(user_id, session_id)
+                chat_history = get_session_chat_history(
+                    user_id,
+                    session_id
+                )
 
                 memory_context = "\n".join([
                     f"{msg['role']}: {msg['content']}"
@@ -245,40 +294,57 @@ def ask_document():
             except Exception as memory_error:
                 print("Mongo Memory Error:", str(memory_error))
 
-        # Enhanced prompt
-        enhanced_question = question
-
-        # Main RAG Answer
+        # =========================
+        # STEP 4: Generate RAG answer
+        # =========================
         result = answer_document_query(
-            query=enhanced_question,
-            active_document=active_document
-            
+            query=question,
+            active_document=active_document,
+            memory_context=memory_context
         )
-        # Save to MongoDB if authenticated user
-        if user_id:
-            save_chat_message(
-                user_id=user_id,
-                question=result["question"],
-                answer=result["answer"],
-                sources=result["sources"]
-            )
 
-        # Safe save block
+        # =========================
+        # STEP 5: Save chat history
+        # =========================
+        if user_id:
+            try:
+                save_chat_message(
+                    user_id=user_id,
+                    question=result["question"],
+                    answer=result["answer"],
+                    sources=result["sources"]
+                )
+            except Exception as save_error:
+                print("Mongo Save Error:", str(save_error))
+
+        # =========================
+        # STEP 6: Save threaded session
+        # =========================
         if user_id and session_id:
             try:
-                save_message(user_id, session_id, "user", question)
+                save_message(
+                    user_id,
+                    session_id,
+                    "user",
+                    question
+                )
+
                 save_message(
                     user_id,
                     session_id,
                     "assistant",
                     result["answer"]
                 )
-            except Exception as save_error:
-                print("Mongo Save Error:", str(save_error))
 
+            except Exception as thread_error:
+                print("Thread Save Error:", str(thread_error))
+
+        # =========================
+        # STEP 7: Final response
+        # =========================
         return jsonify({
             "status": "success",
-            "question": question,
+            "question": result["question"],
             "answer": result["answer"],
             "sources": result["sources"],
             "session_id": session_id
@@ -291,6 +357,10 @@ def ask_document():
             "status": "error",
             "message": str(e)
         }), 500
+    
+
+
+
 
 @document_bp.route("/history", methods=["POST"])
 def get_chat_history():
