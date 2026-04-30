@@ -1,46 +1,75 @@
+from config import Config
 from services.embedding_service import embedding_model
-from services.vector_store_service import collection
+from services.vector_store_service import index
 
 
-def retrieve_relevant_chunks(query, active_document=None, top_k=4):
+def retrieve_relevant_chunks(
+    query,
+    active_document=None,
+    top_k=None
+):
     """
     Convert query into embedding and retrieve top matching chunks
-    only from the selected active document
+    only from selected active document
     """
     if not query:
         raise Exception("Query is required")
 
     try:
-        # Embed query
+        # Use config default if top_k not provided
+        top_k = top_k or Config.TOP_K_RESULTS
+
+        # =========================
+        # STEP 1: Generate query embedding
+        # =========================
         query_embedding = embedding_model.encode(
             [query],
             normalize_embeddings=True
         ).tolist()[0]
 
-        # Optional document filter
+        # =========================
+        # STEP 2: Build Pinecone query params
+        # =========================
         query_params = {
-            "query_embeddings": [query_embedding],
-            "n_results": top_k
+            "vector": query_embedding,
+            "top_k": top_k,
+            "include_metadata": True
         }
 
+        # Filter by active document if selected
         if active_document:
-            query_params["where"] = {
-                "filename": active_document
+            query_params["filter"] = {
+                "filename": {"$eq": active_document}
             }
 
-        # Search ChromaDB
-        results = collection.query(**query_params)
+        # =========================
+        # STEP 3: Search Pinecone
+        # =========================
+        results = index.query(**query_params)
 
-        documents = results.get("documents", [[]])[0]
-        metadatas = results.get("metadatas", [[]])[0]
+        matches = results.get("matches", [])
 
+        # Empty safety
+        if not matches:
+            return []
+
+        # =========================
+        # STEP 4: Format results
+        # =========================
         retrieved_chunks = []
 
-        for doc, meta in zip(documents, metadatas):
+        for match in matches:
+            metadata = match.get("metadata", {})
+
+            # Skip invalid chunks
+            if not metadata.get("text"):
+                continue
+
             retrieved_chunks.append({
-                "chunk": doc,
-                "filename": meta.get("filename"),
-                "chunk_id": meta.get("chunk_id")
+                "chunk": metadata.get("text", ""),
+                "filename": metadata.get("filename"),
+                "chunk_id": metadata.get("chunk_id"),
+                "score": match.get("score", 0)
             })
 
         return retrieved_chunks

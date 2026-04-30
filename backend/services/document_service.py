@@ -5,16 +5,43 @@ from services.text_service import extract_text_file
 
 
 def extract_text_from_document(file_path):
-    extension = os.path.splitext(file_path)[1].lower()
+    """
+    Extract text based on document type
+    Supports: PDF, DOCX, TXT, MD
+    """
+    try:
+        # =========================
+        # STEP 1: Validate file path
+        # =========================
+        if not file_path:
+            raise Exception("File path is required")
 
-    if extension == ".pdf":
-        return extract_pdf_text(file_path)
+        if not os.path.exists(file_path):
+            raise Exception("Document not found")
 
-    elif extension == ".docx":
-        return extract_docx_text(file_path)
+        # =========================
+        # STEP 2: Detect extension
+        # =========================
+        extension = os.path.splitext(file_path)[1].lower()
 
-    elif extension in [".txt", ".md"]:
-        return extract_text_file(file_path)
+        # =========================
+        # STEP 3: Route extractor
+        # =========================
+        if extension == ".pdf":
+            return extract_pdf_text(file_path)
 
-    else:
-        raise Exception("Unsupported file type")
+        elif extension == ".docx":
+            return extract_docx_text(file_path)
+
+        elif extension in [".txt", ".md"]:
+            return extract_text_file(file_path)
+
+        else:
+            raise Exception(
+                f"Unsupported file type: {extension}"
+            )
+
+    except Exception as e:
+        raise Exception(
+            f"Document extraction failed: {str(e)}"
+        )

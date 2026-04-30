@@ -3,37 +3,41 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 class Config:
-    #GROQ API
+
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-    # MongoDB
+    # Pinecone
+    PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+    PINECONE_INDEX_NAME = os.getenv(
+        "PINECONE_INDEX_NAME",
+        "genai-doc-assistant"
+    )
+
+
     MONGO_URI = os.getenv("MONGO_URI")
     MONGO_DB_NAME = os.getenv("MONGO_DB_NAME")
 
-    # Detect Render environment
-    BASE_STORAGE = "/var/data" if os.getenv("RENDER") else "."
-    
-    
 
-    # Folder Paths
-    # UPLOAD_FOLDER = "uploads"
-    # CHROMA_DIR = "chroma_db"
+    IS_RENDER = os.getenv("RENDER") is not None
+    BASE_STORAGE = "/var/data" if IS_RENDER else "."
 
-    # Folder Paths (Persistent on Render)
+
     UPLOAD_FOLDER = os.path.join(BASE_STORAGE, "uploads")
-    CHROMA_DIR = os.path.join(BASE_STORAGE, "chroma_db")
 
-    
+    EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
-    # Models
-    EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+    # Groq LLM
     GROQ_MODEL = "llama-3.3-70b-versatile"
 
     CHUNK_SIZE = 500
     CHUNK_OVERLAP = 50
     TOP_K_RESULTS = 3
 
+    # all-MiniLM-L6-v2 = 384 dimensions
+    EMBEDDING_DIMENSION = 384
 
-    # App Config
-    DEBUG = os.getenv("RENDER") is None
+
+    DEBUG = not IS_RENDER
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
