@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: genai-doc-assistant-backend
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    plan: free
+
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+
+      - key: MONGO_URI
+        sync: false
+
+      - key: MONGO_DB_NAME
+        value: genai_doc_assistant
+
+      - key: RENDER
+        value: true
+
+    disk:
+      name: chroma-storage
+      mountPath: /var/data
+      sizeGB: 1

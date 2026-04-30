@@ -4,21 +4,27 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
+    #GROQ API
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
     # MongoDB
     MONGO_URI = os.getenv("MONGO_URI")
     MONGO_DB_NAME = os.getenv("MONGO_DB_NAME")
-    
+
     # Detect Render environment
-    #BASE_STORAGE = "/var/data" if os.getenv("RENDER") else "."
+    BASE_STORAGE = "/var/data" if os.getenv("RENDER") else "."
+    
+    
 
     # Folder Paths
-    UPLOAD_FOLDER = "uploads"
-    CHROMA_DIR = "chroma_db"
+    # UPLOAD_FOLDER = "uploads"
+    # CHROMA_DIR = "chroma_db"
 
-    # Persistent folders
-    # UPLOAD_FOLDER = os.path.join(BASE_STORAGE, "uploads")
-    # CHROMA_DIR = os.path.join(BASE_STORAGE, "chroma_db")
+    # Folder Paths (Persistent on Render)
+    UPLOAD_FOLDER = os.path.join(BASE_STORAGE, "uploads")
+    CHROMA_DIR = os.path.join(BASE_STORAGE, "chroma_db")
+
+    
 
     # Models
     EMBEDDING_MODEL = "all-MiniLM-L6-v2"
@@ -30,4 +36,4 @@ class Config:
 
 
     # App Config
-    DEBUG = True
+    DEBUG = os.getenv("RENDER") is None
