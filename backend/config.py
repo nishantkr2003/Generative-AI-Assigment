@@ -26,7 +26,7 @@ class Config:
 
     UPLOAD_FOLDER = os.path.join(BASE_STORAGE, "uploads")
 
-    EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+    EMBEDDING_MODEL = "sentence-transformers/paraphrase-MiniLM-L3-v2"
 
     # Groq LLM
     GROQ_MODEL = "llama-3.3-70b-versatile"

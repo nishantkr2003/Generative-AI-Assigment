@@ -20,8 +20,7 @@ def get_embedding_model():
     return _model
 
 
-# Global reusable model
-embedding_model = get_embedding_model()
+
 
 
 def generate_embeddings(chunks):
@@ -32,9 +31,12 @@ def generate_embeddings(chunks):
         raise Exception("No chunks provided for embedding")
 
     try:
+        # Load only when needed
+        embedding_model = get_embedding_model()
+        
         embeddings = embedding_model.encode(
             chunks,
-            batch_size=8,
+            batch_size=4,
             show_progress_bar=False,
             convert_to_numpy=True,
             normalize_embeddings=True
