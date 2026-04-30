@@ -31,7 +31,7 @@ class Config:
     # Groq LLM
     GROQ_MODEL = "llama-3.3-70b-versatile"
 
-    CHUNK_SIZE = 500
+    CHUNK_SIZE = 300
     CHUNK_OVERLAP = 50
     TOP_K_RESULTS = 3
 
