@@ -1,5 +1,5 @@
 from config import Config
-from services.embedding_service import embedding_model
+from services.embedding_service import get_embedding_model
 from services.vector_store_service import index
 
 
@@ -22,6 +22,7 @@ def retrieve_relevant_chunks(
         # =========================
         # STEP 1: Generate query embedding
         # =========================
+        embedding_model = get_embedding_model()
         query_embedding = embedding_model.encode(
             [query],
             normalize_embeddings=True
