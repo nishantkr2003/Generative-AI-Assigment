@@ -24,7 +24,7 @@ os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
 
 
 # Test MongoDB
-test_mongo_connection()
+#test_mongo_connection()
 
 
 # Register Universal Document Blueprint
@@ -35,9 +35,8 @@ app.register_blueprint(document_bp, url_prefix="/api/document")
 @app.route("/", methods=["GET"])
 def home():
     return jsonify({
-        "status": "success",
-        "message": "Multi-Document RAG Backend Running Successfully"
-    })
+        "status": "ok"
+    }),200
 
 
 # Local Development

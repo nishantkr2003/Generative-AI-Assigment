@@ -5,10 +5,11 @@ from services.retrieval_service import retrieve_relevant_chunks
 
 
 # Load Groq LLM
-llm = ChatGroq(
-    groq_api_key=Config.GROQ_API_KEY,
-    model_name=Config.GROQ_MODEL
-)
+def get_llm():
+    return ChatGroq(
+        groq_api_key=Config.GROQ_API_KEY,
+        model_name=Config.GROQ_MODEL
+    )
 
 
 def answer_document_query(query, active_document=None, memory_context=""):
@@ -82,6 +83,8 @@ Instructions:
         # =========================
         # STEP 5: Generate answer
         # =========================
+        llm = get_llm()
+
         response = llm.invoke(final_prompt)
 
         final_answer = response.content.strip()

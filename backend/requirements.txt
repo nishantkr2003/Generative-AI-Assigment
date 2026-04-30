@@ -5,7 +5,8 @@ python-dotenv==1.2.2
 sentence-transformers==5.4.1
 # torch handled automatically by sentence-transformers unless manually needed
 
-langchain==1.2.15
+langchain-core==1.3.2
+langchain-groq==1.1.2
 langchain-core==1.3.2
 langchain-groq==1.1.2
 
