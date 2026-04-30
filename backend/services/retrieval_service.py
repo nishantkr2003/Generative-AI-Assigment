@@ -1,6 +1,6 @@
 from config import Config
 from services.embedding_service import get_embedding_model
-from services.vector_store_service import index
+from services.vector_store_service import get_pinecone_index
 
 
 def retrieve_relevant_chunks(
@@ -46,6 +46,8 @@ def retrieve_relevant_chunks(
         # =========================
         # STEP 3: Search Pinecone
         # =========================
+        index = get_pinecone_index()
+
         results = index.query(**query_params)
 
         matches = results.get("matches", [])

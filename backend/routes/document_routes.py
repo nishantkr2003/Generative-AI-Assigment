@@ -6,9 +6,11 @@ from config import Config
 from services.document_service import extract_text_from_document
 from services.process_service import process_document
 from services.rag_pipeline_service import prepare_document_for_rag
+#from services.store_pipeline_service import store_document_for_rag
+#from services.rag_answer_service import answer_document_query
+from services.memory_service import get_user_chat_history
 from services.store_pipeline_service import store_document_for_rag
 from services.rag_answer_service import answer_document_query
-from services.memory_service import get_user_chat_history
 from services.memory_service import clear_user_chat_history
 # from services.session_service import (
 #     create_or_get_session,
