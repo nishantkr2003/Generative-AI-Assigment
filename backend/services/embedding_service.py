@@ -36,7 +36,7 @@ def generate_embeddings(chunks):
         
         embeddings = embedding_model.encode(
             chunks,
-            batch_size=4,
+            batch_size=2,
             show_progress_bar=False,
             convert_to_numpy=True,
             normalize_embeddings=True
