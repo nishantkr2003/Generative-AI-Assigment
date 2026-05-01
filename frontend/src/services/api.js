@@ -1,10 +1,16 @@
 import axios from "axios";
 
+// Production + Development API URL
+const BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://generative-ai-assigment-backend.onrender.com/api/document";
+
+
 const API = axios.create({
-  baseURL: "http://127.0.0.1:5000/api/document",
+  baseURL: BASE_URL,
+  timeout: 60000,
 });
 
-// Upload Document
 export const uploadDocument = async (file) => {
   const formData = new FormData();
   formData.append("file", file);
@@ -18,7 +24,8 @@ export const uploadDocument = async (file) => {
   return response.data;
 };
 
-// Process Document
+
+
 export const processDocument = async (filename) => {
   const response = await API.post("/process", {
     filename,
@@ -27,7 +34,7 @@ export const processDocument = async (filename) => {
   return response.data;
 };
 
-// Store Document
+
 export const storeDocument = async (filename) => {
   const response = await API.post("/store", {
     filename,
@@ -36,15 +43,22 @@ export const storeDocument = async (filename) => {
   return response.data;
 };
 
-// Ask Question
 
 export const askDocument = async (question, userId) => {
-  const response = await API.post("/ask", {
-    question,
-    user_id: userId,
-  });
+  try {
+    const response = await API.post("/ask", {
+      question,
+      user_id: userId,
+    });
 
-  return response.data;
+    return response.data;
+  } catch (error) {
+    throw (
+      error.response?.data || {
+        error: "Backend unavailable or CORS issue",
+      }
+    );
+  }
 };
 
 export const getChatHistory = async (userId) => {
