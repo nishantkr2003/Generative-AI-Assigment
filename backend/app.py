@@ -24,7 +24,8 @@ CORS(
             "origins": [
                 "http://localhost:5173",   # Local Vite
                 "http://127.0.0.1:5173",   # Local fallback
-                "https://*.vercel.app"     # Any Vercel deployment
+                "https://*.vercel.app",     # Any Vercel deployment
+                "https://generative-ai-assigment.vercel.app",     # Any Vercel deployment
             ]
         }
     },
