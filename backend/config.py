@@ -23,8 +23,14 @@ class Config:
     IS_RENDER = os.getenv("RENDER") is not None
     BASE_STORAGE = "/var/data" if IS_RENDER else "."
 
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    UPLOAD_FOLDER = os.path.join(BASE_STORAGE, "uploads")
+
+    # UPLOAD_FOLDER = os.path.join(BASE_STORAGE, "uploads")
+    UPLOAD_FOLDER = os.getenv(
+        "UPLOAD_FOLDER",
+        os.path.join(BASE_DIR, "uploads")
+    )
 
     EMBEDDING_MODEL = "sentence-transformers/paraphrase-MiniLM-L3-v2"
 
