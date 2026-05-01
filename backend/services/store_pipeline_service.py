@@ -14,18 +14,14 @@ def store_document_for_rag(
     Extract -> Chunk -> Embed -> Store
     """
     try:
-        # =========================
-        # STEP 1: Validate file
-        # =========================
+    
         if not file_path or not os.path.exists(file_path):
             raise Exception("Document not found")
 
         if not filename:
             raise Exception("Filename is required")
 
-        # =========================
-        # STEP 2: Prepare document
-        # =========================
+       
         rag_data = prepare_document_for_rag(file_path)
 
         if not rag_data.get("chunks"):
@@ -34,9 +30,7 @@ def store_document_for_rag(
         if not rag_data.get("embeddings"):
             raise Exception("No embeddings generated")
 
-        # =========================
-        # STEP 3: Store in Pinecone
-        # =========================
+       
         storage_result = store_document_embeddings(
             filename=filename,
             chunks=rag_data["chunks"],
@@ -44,9 +38,7 @@ def store_document_for_rag(
             namespace=namespace
         )
 
-        # =========================
-        # STEP 4: Final response
-        # =========================
+
         return {
             "filename": filename,
             "raw_text_length": rag_data["raw_text_length"],

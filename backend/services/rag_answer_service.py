@@ -21,9 +21,7 @@ def answer_document_query(query, active_document=None, memory_context=""):
         raise Exception("Query is required")
 
     try:
-        # =========================
-        # STEP 1: Retrieve relevant chunks
-        # =========================
+        
         retrieved_chunks = retrieve_relevant_chunks(
             query=query,
             active_document=active_document
@@ -37,16 +35,12 @@ def answer_document_query(query, active_document=None, memory_context=""):
                 "sources": []
             }
 
-        # =========================
-        # STEP 2: Build context
-        # =========================
+        
         context = "\n\n".join([
             chunk["chunk"] for chunk in retrieved_chunks
         ])
 
-        # =========================
-        # STEP 3: Build exact sources
-        # =========================
+        
         sources = [
             {
                 "filename": chunk["filename"],
@@ -56,9 +50,7 @@ def answer_document_query(query, active_document=None, memory_context=""):
             for chunk in retrieved_chunks
         ]
 
-        # =========================
-        # STEP 4: Final Prompt
-        # =========================
+        
         final_prompt = f"""
 You are an AI document assistant.
 
@@ -80,18 +72,14 @@ Instructions:
 - Be clear, concise, and precise
 """
 
-        # =========================
-        # STEP 5: Generate answer
-        # =========================
+        
         llm = get_llm()
 
         response = llm.invoke(final_prompt)
 
         final_answer = response.content.strip()
 
-        # =========================
-        # STEP 6: Final structured response
-        # =========================
+        
         return {
             "question": query,
             "answer": final_answer,

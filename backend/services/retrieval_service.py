@@ -19,18 +19,14 @@ def retrieve_relevant_chunks(
         # Use config default if top_k not provided
         top_k = top_k or Config.TOP_K_RESULTS
 
-        # =========================
-        # STEP 1: Generate query embedding
-        # =========================
+        
         embedding_model = get_embedding_model()
         query_embedding = embedding_model.encode(
             [query],
             normalize_embeddings=True
         ).tolist()[0]
 
-        # =========================
-        # STEP 2: Build Pinecone query params
-        # =========================
+        
         query_params = {
             "vector": query_embedding,
             "top_k": top_k,
@@ -43,9 +39,7 @@ def retrieve_relevant_chunks(
                 "filename": {"$eq": active_document}
             }
 
-        # =========================
-        # STEP 3: Search Pinecone
-        # =========================
+        
         index = get_pinecone_index()
 
         results = index.query(**query_params)
@@ -56,9 +50,7 @@ def retrieve_relevant_chunks(
         if not matches:
             return []
 
-        # =========================
-        # STEP 4: Format results
-        # =========================
+        
         retrieved_chunks = []
 
         for match in matches:

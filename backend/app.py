@@ -38,10 +38,6 @@ os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
 
 
 
-# Test MongoDB
-#test_mongo_connection()
-
-
 # Register Universal Document Blueprint
 app.register_blueprint(document_bp, url_prefix="/api/document")
 
