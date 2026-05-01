@@ -15,7 +15,21 @@ app = Flask(__name__)
 app.config.from_object(Config)
 
 # Enable CORS
-CORS(app)
+# CORS(app)
+
+CORS(
+    app,
+    resources={
+        r"/api/*": {
+            "origins": [
+                "http://localhost:5173",   # Local Vite
+                "http://127.0.0.1:5173",   # Local fallback
+                "https://*.vercel.app"     # Any Vercel deployment
+            ]
+        }
+    },
+    supports_credentials=True
+)
 
 
 # Ensure storage folders exist
