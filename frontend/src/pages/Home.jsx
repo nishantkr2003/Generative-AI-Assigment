@@ -1,4 +1,3 @@
-// UI REDESIGNED - logic unchanged
 import {
   SignInButton,
   SignUpButton,
@@ -151,7 +150,6 @@ export default function Home() {
         {/* Stats row */}
         <div className="mt-16 flex flex-wrap items-center justify-center gap-8 border-t border-white/5 pt-10">
           {[
-            
             { value: "RAG", label: "Retrieval architecture" },
             { value: "Groq", label: "LLM powered" },
             { value: "100%", label: "Private & secure" },
