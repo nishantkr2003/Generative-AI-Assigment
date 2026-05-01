@@ -3,9 +3,7 @@ from pinecone import Pinecone, ServerlessSpec
 from config import Config
 
 
-# =========================
-# Lazy-loaded Pinecone
-# =========================
+
 _pc = None
 _index = None
 
@@ -98,22 +96,16 @@ def store_document_embeddings(
         )
 
     try:
-        # =========================
-        # STEP 1: Lazy load index
-        # =========================
+        
         index = get_pinecone_index()
 
-        # =========================
-        # STEP 2: Remove duplicates
-        # =========================
+       
         delete_document_by_filename(
             filename,
             namespace
         )
 
-        # =========================
-        # STEP 3: Build vectors
-        # =========================
+        
         vectors = []
 
         for i, (chunk, embedding) in enumerate(
@@ -138,9 +130,7 @@ def store_document_embeddings(
                 "No valid vectors to store"
             )
 
-        # =========================
-        # STEP 4: Upsert
-        # =========================
+        
         upsert_params = {
             "vectors": vectors
         }

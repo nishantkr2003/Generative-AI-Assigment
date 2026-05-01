@@ -10,23 +10,19 @@ def extract_text_from_document(file_path):
     Supports: PDF, DOCX, TXT, MD
     """
     try:
-        # =========================
+      
         # STEP 1: Validate file path
-        # =========================
         if not file_path:
             raise Exception("File path is required")
 
         if not os.path.exists(file_path):
             raise Exception("Document not found")
 
-        # =========================
         # STEP 2: Detect extension
-        # =========================
         extension = os.path.splitext(file_path)[1].lower()
 
-        # =========================
+        
         # STEP 3: Route extractor
-        # =========================
         if extension == ".pdf":
             return extract_pdf_text(file_path)
 
