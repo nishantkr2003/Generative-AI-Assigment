@@ -1,10 +1,8 @@
-
 import { askDocument, getChatHistory, clearChatHistory } from "../services/api";
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 export default function ChatBox() {
-
-    const { user } = useUser();
+  const { user } = useUser();
 
   const storageKey = user ? `chat_history_${user.id}` : "chat_history_guest";
   const [question, setQuestion] = useState("");
