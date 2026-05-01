@@ -215,17 +215,213 @@ FLASK_ENV=development
 
 # API Endpoints
 
-## Upload Document
+Base URL (local): `http://localhost:5000/api/document`
+Base URL (production): `https://your-backend.onrender.com/api/document`
+
+---
+
+## 1. Upload Document
 
 ```http
 POST /api/document/upload
 ```
 
-## Ask Questions
+**Content-Type:** `multipart/form-data`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `file` | File | Yes | PDF, DOCX, TXT, or MD file |
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Document uploaded, processed, and stored successfully in Pinecone",
+  "filename": "example.pdf",
+  "file_type": "pdf",
+  "raw_text_length": 12400,
+  "total_chunks": 48,
+  "embedding_dimension": 384,
+  "stored_chunks": 48,
+  "preview": "First 1500 characters of extracted text..."
+}
+```
+
+---
+
+## 2. Process Document
 
 ```http
-POST /api/document/query
+POST /api/document/process
 ```
+
+**Content-Type:** `application/json`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `filename` | string | Yes | Name of already uploaded file |
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Document processed successfully",
+  "filename": "example.pdf",
+  "raw_text_length": 12400,
+  "total_chunks": 48,
+  "sample_chunks": ["chunk1...", "chunk2...", "chunk3..."]
+}
+```
+
+---
+
+## 3. Embed Document
+
+```http
+POST /api/document/embed
+```
+
+**Content-Type:** `application/json`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `filename` | string | Yes | Name of already uploaded file |
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Document embedded successfully",
+  "filename": "example.pdf",
+  "raw_text_length": 12400,
+  "total_chunks": 48,
+  "embedding_dimension": 384,
+  "sample_chunk": "First chunk text...",
+  "sample_embedding": [0.012, -0.034, 0.056, "..."]
+}
+```
+
+---
+
+## 4. Store Document in Pinecone
+
+```http
+POST /api/document/store
+```
+
+**Content-Type:** `application/json`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `filename` | string | Yes | Name of already uploaded file |
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Document stored successfully in Pinecone",
+  "filename": "example.pdf",
+  "raw_text_length": 12400,
+  "total_chunks": 48,
+  "embedding_dimension": 384,
+  "stored_chunks": 48
+}
+```
+
+---
+
+## 5. Ask a Question (RAG)
+
+```http
+POST /api/document/ask
+```
+
+**Content-Type:** `application/json`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `question` | string | Yes | Question to ask about the document |
+| `user_id` | string | No | User ID for chat memory |
+| `session_id` | string | No | Session ID for threaded history |
+| `active_document` | string | No | Filename to scope the query |
+
+**Response:**
+```json
+{
+  "status": "success",
+  "question": "What is this document about?",
+  "answer": "This document is about...",
+  "sources": ["chunk reference 1", "chunk reference 2"],
+  "session_id": "session_abc123"
+}
+```
+
+---
+
+## 6. Get Chat History
+
+```http
+POST /api/document/history
+```
+
+**Content-Type:** `application/json`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `user_id` | string | Yes | User ID to fetch history for |
+
+**Response:**
+```json
+{
+  "status": "success",
+  "history": [
+    {
+      "question": "What is RAG?",
+      "answer": "RAG stands for...",
+      "sources": ["..."]
+    }
+  ]
+}
+```
+
+---
+
+## 7. Clear Chat History
+
+```http
+POST /api/document/clear-history
+```
+
+**Content-Type:** `application/json`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `user_id` | string | Yes | User ID whose history to clear |
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Deleted 12 chat records"
+}
+```
+
+---
+
+## Error Response (All Endpoints)
+
+```json
+{
+  "status": "error",
+  "message": "Description of what went wrong"
+}
+```
+
+| Code | Meaning |
+|------|---------|
+| `400` | Bad request / missing fields |
+| `404` | File not found |
+| `500` | Internal server error |
 
 ---
 
