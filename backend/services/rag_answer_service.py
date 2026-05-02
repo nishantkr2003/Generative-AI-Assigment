@@ -68,7 +68,6 @@ Instructions:
 - Answer ONLY using the provided document context
 - Combine ALL relevant chunks before answering
 - Prioritize consistency across document sections
-- Do NOT over-focus on one chunk
 - If multiple sections discuss the same topic, synthesize them
 - Do NOT rely on only one chunk unless explicitly sufficient
 - When summarizing, cover all major themes, sections, or topics
