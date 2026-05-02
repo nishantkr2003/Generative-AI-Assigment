@@ -1,7 +1,5 @@
 import os
-import uuid
 from flask import Blueprint, request, jsonify
-from pkg_resources import safe_name
 from werkzeug.utils import secure_filename
 from services.memory_service import save_chat_message
 from config import Config
@@ -63,20 +61,7 @@ def upload_document():
 
     
         # STEP 5: Secure filename
-        original_filename = file.filename
-        safe_name = secure_filename(original_filename)
-
-        # Validate extension survives cleaning
-        file_ext = os.path.splitext(safe_name)[1].lower()
-
-        if not file_ext:
-            return jsonify({
-                "status": "error",
-                "message": "Invalid filename or unsupported extension"
-            }), 400
-
-        # Generate unique filename
-        filename = f"{uuid.uuid4().hex}{file_ext}"
+        filename = secure_filename(file.filename)
 
 
         # STEP 6: Save file
