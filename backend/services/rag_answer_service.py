@@ -37,7 +37,8 @@ def answer_document_query(query, active_document=None, memory_context=""):
 
         
         context = "\n\n".join([
-            chunk["chunk"] for chunk in retrieved_chunks
+            f"[Chunk {i+1} | Score: {chunk['score']:.4f} | Source: {chunk['filename']}]\n{chunk['chunk']}"
+            for i, chunk in enumerate(retrieved_chunks)
         ])
 
         
@@ -64,12 +65,18 @@ Current user question:
 {query}
 
 Instructions:
-- Answer ONLY from the provided document context
-- Use previous conversation only for conversational continuity
-- If answer is not explicitly in document context, say exactly:
-  "The document does not contain that information."
+- Answer ONLY using the provided document context
+- Combine ALL relevant chunks before answering
+- Prioritize consistency across document sections
+- Do NOT over-focus on one chunk
+- If multiple sections discuss the same topic, synthesize them
+- Do NOT rely on only one chunk unless explicitly sufficient
+- When summarizing, cover all major themes, sections, or topics
+- If document includes multiple concepts, mention each clearly
+- If answer is absent, say exactly:
+"The document does not contain that information."
 - Do NOT hallucinate
-- Be clear, concise, and precise
+- Be comprehensive but precise
 """
 
         

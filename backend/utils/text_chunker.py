@@ -20,7 +20,7 @@ def clean_text(text):
     return text.strip()
 
 
-def chunk_text(text, chunk_size=800, overlap=150):
+def chunk_text(text, chunk_size=700, overlap=120):
     """
     Split text into overlapping chunks
     """

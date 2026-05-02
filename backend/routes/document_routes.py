@@ -1,5 +1,7 @@
 import os
+import uuid
 from flask import Blueprint, request, jsonify
+from pkg_resources import safe_name
 from werkzeug.utils import secure_filename
 from services.memory_service import save_chat_message
 from config import Config
@@ -12,11 +14,7 @@ from services.memory_service import get_user_chat_history
 from services.store_pipeline_service import store_document_for_rag
 from services.rag_answer_service import answer_document_query
 from services.memory_service import clear_user_chat_history
-# from services.session_service import (
-#     create_or_get_session,
-#     get_chat_history,
-#     save_message
-# )
+
 
 document_bp = Blueprint("document_bp", __name__)
 
@@ -30,9 +28,8 @@ def allowed_file(filename):
 @document_bp.route("/upload", methods=["POST"])
 def upload_document():
     try:
-        # =========================
+
         # STEP 1: Validate file exists
-        # =========================
         if "file" not in request.files:
             return jsonify({
                 "status": "error",
@@ -41,37 +38,48 @@ def upload_document():
 
         file = request.files["file"]
 
-        # =========================
+      
         # STEP 2: Validate filename
-        # =========================
+        
         if file.filename == "":
             return jsonify({
                 "status": "error",
                 "message": "No file selected"
             }), 400
 
-        # =========================
+        
         # STEP 3: Validate extension
-        # =========================
+        
         if not allowed_file(file.filename):
             return jsonify({
                 "status": "error",
                 "message": "Unsupported file type. Allowed: pdf, docx, txt, md"
             }), 400
 
-        # =========================
+        
         # STEP 4: Ensure upload folder
-        # =========================
+        
         os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
 
-        # =========================
+    
         # STEP 5: Secure filename
-        # =========================
-        filename = secure_filename(file.filename)
+        original_filename = file.filename
+        safe_name = secure_filename(original_filename)
 
-        # =========================
+        # Validate extension survives cleaning
+        file_ext = os.path.splitext(safe_name)[1].lower()
+
+        if not file_ext:
+            return jsonify({
+                "status": "error",
+                "message": "Invalid filename or unsupported extension"
+            }), 400
+
+        # Generate unique filename
+        filename = f"{uuid.uuid4().hex}{file_ext}"
+
+
         # STEP 6: Save file
-        # =========================
         file_path = os.path.join(
             Config.UPLOAD_FOLDER,
             filename
@@ -79,9 +87,9 @@ def upload_document():
 
         file.save(file_path)
 
-        # =========================
+  
         # STEP 7: Extract text preview
-        # =========================
+
         extracted_text = extract_text_from_document(file_path)
 
         if not extracted_text:
@@ -90,17 +98,17 @@ def upload_document():
                 "message": "No readable text found in document"
             }), 400
 
-        # =========================
+    
         # STEP 8: Full Pinecone RAG pipeline
-        # =========================
+        
         stored_data = store_document_for_rag(
             file_path=file_path,
             filename=filename
         )
 
-        # =========================
+        
         # STEP 9: Final response
-        # =========================
+        
         return jsonify({
             "status": "success",
             "message": "Document uploaded, processed, and stored successfully in Pinecone",
@@ -264,16 +272,14 @@ def ask_document():
                 "message": "Question cannot be empty"
             }), 400
 
-        # =========================
+        
         # STEP 2: Optional metadata
-        # =========================
         user_id = data.get("user_id")
         session_id = data.get("session_id")
         active_document = data.get("active_document")
 
-        # =========================
+    
         # STEP 3: Build memory context
-        # =========================
         memory_context = ""
 
         if user_id and session_id:
@@ -296,18 +302,18 @@ def ask_document():
             except Exception as memory_error:
                 print("Mongo Memory Error:", str(memory_error))
 
-        # =========================
+
         # STEP 4: Generate RAG answer
-        # =========================
+ 
         result = answer_document_query(
             query=question,
             active_document=active_document,
             memory_context=memory_context
         )
 
-        # =========================
+
         # STEP 5: Save chat history
-        # =========================
+  
         if user_id:
             try:
                 save_chat_message(
@@ -319,9 +325,9 @@ def ask_document():
             except Exception as save_error:
                 print("Mongo Save Error:", str(save_error))
 
-        # =========================
+        
         # STEP 6: Save threaded session
-        # =========================
+        
         if user_id and session_id:
             try:
                 save_message(
@@ -341,9 +347,9 @@ def ask_document():
             except Exception as thread_error:
                 print("Thread Save Error:", str(thread_error))
 
-        # =========================
+        
         # STEP 7: Final response
-        # =========================
+       
         return jsonify({
             "status": "success",
             "question": result["question"],
@@ -393,8 +399,8 @@ def get_chat_history():
 @document_bp.route("/clear-history", methods=["POST"])
 def clear_chat_history():
     try:
+        
         data = request.get_json()
-
         user_id = data.get("user_id")
 
         if not user_id:

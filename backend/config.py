@@ -39,7 +39,7 @@ class Config:
 
     CHUNK_SIZE = 300
     CHUNK_OVERLAP = 50
-    TOP_K_RESULTS = 3
+    TOP_K_RESULTS = 5
 
     # all-MiniLM-L6-v2 = 384 dimensions
     EMBEDDING_DIMENSION = 384
